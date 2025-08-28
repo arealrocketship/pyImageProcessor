@@ -29,32 +29,44 @@ class MainWindow(QWidget):
         self.process_button = QPushButton("Process the image")
         self.process_button.clicked.connect(self.process_image)
 
+        self.restore_button = QPushButton("Restore original image")
+        self.restore_button.clicked.connect(self.restore_image)
+
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.load_button)
         button_layout.addWidget(self.process_button)
+        button_layout.addWidget(self.restore_button)
 
         layout = QVBoxLayout()
         layout.addWidget(self.image_label)
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
-    def process_image(self):
-        if photoPath:
-            self.image = cv2.imread(photoPath)
-            newImage = self.image.copy()
-            # Perform image processing here
-            newImage = cv2.cvtColor(newImage, cv2.COLOR_BGR2GRAY)
+    def restore_image(self):
+        self.image = self.originalImage
+        self.display_image(self.image)
 
-            # Perform image processing here
-            self.display_image(newImage)
+    def process_image(self):       
+        #self.image = cv2.imread(photoPath)
+        newImage = self.image
+        # Perform image processing here
+        newImage = self.rotate_image(newImage,10)
+        #newImage = cv2.cvtColor(newImage, cv2.COLOR_BGR2GRAY)
+        self.display_image(newImage)
 
-
-
-
+    def rotate_image(self, img, numDegrees):
+        rows,cols = img.shape[:2]
+        print(rows,cols)
+        # cols-1 and rows-1 are the coordinate limits.
+        M = cv2.getRotationMatrix2D(((cols-1)/2.0,(rows-1)/2.0),numDegrees,1)
+        dst = cv2.warpAffine(img,M,(cols,rows))
+        return dst
+    
     def load_image(self):
         if photoPath:
             self.image_path = photoPath
             self.image = cv2.imread(photoPath)
+            self.originalImage = self.image.copy()
             self.display_image(self.image)
 
     def display_image(self, image):
@@ -70,3 +82,4 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+
