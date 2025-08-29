@@ -8,3 +8,7 @@ Current order of operations:
     Apply a given effect stack at set intervals
     Save all those images into a gif at a predetermined framerate
     Export automatically
+
+
+
+    
