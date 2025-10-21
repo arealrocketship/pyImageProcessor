@@ -107,6 +107,8 @@ class MainWindow(QWidget):
         processedImage = cv2.warpAffine(img,M,(cols,rows))
         return processedImage
 
+ #Still can't stack effects additively. Unfortunate!
+
     def debugger(self,message):
         print(f"{message}")
 
