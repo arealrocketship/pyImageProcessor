@@ -2,7 +2,7 @@ import sys, os
 import numpy as np #numerical operations
 import cv2 #openCV for image processing
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QLabel, QPushButton, QVBoxLayout,
+    QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QComboBox,
     QFileDialog, QHBoxLayout
 ) #GUI
 from PyQt5.QtGui import QPixmap, QImage
@@ -19,9 +19,12 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Image Processor GUI")
         self.setGeometry(100,100,800,600)
-        self.image = None
-        self.image_path = photoPath
+        self.original_image = None
+        self.modified_image = None
         self.rotation_angle = 0  # Track current rotation angle
+        self.blur_intensity = 5
+        self.edge_threshold1 = 100
+        self.edge_threshold2 = 200
 
         self.image_label = QLabel("No image loaded")
         self.image_label.setAlignment(Qt.AlignCenter) 
@@ -32,49 +35,77 @@ class MainWindow(QWidget):
         self.process_button = QPushButton("Process the image")
         self.process_button.clicked.connect(self.process_image)
 
-        self.restore_button = QPushButton("Restore original image")
-        self.restore_button.clicked.connect(self.restore_image)
+        self.effect_dropdown = QComboBox()
+        effectsForDropdown = ["Rotate","Blur","Edge Detection"]
+        self.effect_dropdown.addItems(effectsForDropdown)
+        self.effect_dropdown.currentTextChanged.connect(self.apply_effect)
 
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.load_button)
-        button_layout.addWidget(self.process_button)
-        button_layout.addWidget(self.restore_button)
+        self.restore_button = QPushButton("Restore original image")
+        self.restore_button.clicked.connect(self.load_image)
+
+        button_layoutRow1 = QHBoxLayout()
+        button_layoutRow1.addWidget(self.load_button)
+        #button_layoutRow1.addWidget(self.restore_button)
+
+        button_layoutRow2 = QHBoxLayout()
+        button_layoutRow2.addWidget(self.effect_dropdown)
+        button_layoutRow2.addWidget(self.process_button)
+
 
         layout = QVBoxLayout()
         layout.addWidget(self.image_label)
-        layout.addLayout(button_layout)
+        layout.addLayout(button_layoutRow1)
+        layout.addLayout(button_layoutRow2)
         self.setLayout(layout)
 
-    def restore_image(self):
-        # Restore the image to its original state and reset rotation
-        if self.image_path:
-            self.image = cv2.imread(self.image_path)
-            self.rotation_angle = 0
-            self.debugger("Restored Original Image")
-            self.display_image(self.image)
-
-    def process_image(self):       
-        if self.image is not None:
-            self.rotation_angle = (self.rotation_angle + 10) % 360  # Increment angle
-            newImage = self.image.copy()
-            newImage = self.rotate_image(newImage, self.rotation_angle)
-            self.debugger("Processed Image")
-            self.display_image(newImage)
-
-    def rotate_image(self, img, numDegrees):
-        rows,cols = img.shape[:2]
-        # cols-1 and rows-1 are the coordinate limits.
-        M = cv2.getRotationMatrix2D(((cols-1)/2.0,(rows-1)/2.0),numDegrees,1)
-        dst = cv2.warpAffine(img,M,(cols,rows))
-        return dst
-    
     def load_image(self):
         if photoPath:
             self.image_path = photoPath
-            self.image = cv2.imread(photoPath)
-            self.originalImage = self.image.copy()
-            self.debugger(f"Loaded image from {self.image_path}")
-            self.display_image(self.image)
+            self.original_image = cv2.imread(photoPath)
+            self.current_image = self.original_image.copy()
+            self.debugger(f"Loaded image from {photoPath}")
+            self.display_image(self.current_image)
+
+    def process_image(self):       
+        try:
+            self.current_image = self.original_image.copy()
+            effect = self.effect_dropdown.currentText()
+            self.apply_effect(effect)
+            self.debugger(f"Processed Image with {effect}!")
+            self.display_image(self.current_image)
+        except AttributeError:
+            print("You have to load an image first!")
+
+    def apply_effect(self,effect):
+        img = self.current_image.copy()
+        if effect =="Rotate":
+            img = self.rotate_image(img)
+        elif effect =="Blur":
+            img = self.blur_image(img)
+        elif effect =="Edge Detection":
+            img = self.detect_edges(img)
+        self.current_image = img
+
+    def detect_edges(self,img):
+        self.edge_threshold1 = self.edge_threshold1 + 5
+        #self.edge_threshold2 = self.edge_threshold1*2 #Using fixed ratio
+        grayImage = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        processedImage =  cv2.Canny(grayImage,self.edge_threshold1,self.edge_threshold1*2)
+        return processedImage
+
+    def blur_image(self,img):
+        self.blur_intensity = 11
+        #self.blur_intensity = (self.blur_intensity + 4)  # Increment blur intensity
+        processedImage = cv2.GaussianBlur(img,(11,11),0)
+        return processedImage
+    
+    def rotate_image(self, img):
+        self.rotation_angle = (self.rotation_angle + 10) % 360  # Increment angle
+        rows,cols = img.shape[:2]
+        # cols-1 and rows-1 are the coordinate limits.
+        M = cv2.getRotationMatrix2D(((cols-1)/2.0,(rows-1)/2.0),self.rotation_angle,1)
+        processedImage = cv2.warpAffine(img,M,(cols,rows))
+        return processedImage
 
     def debugger(self,message):
         print(f"{message}")
