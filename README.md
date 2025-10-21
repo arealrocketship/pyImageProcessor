@@ -9,6 +9,9 @@ Current order of operations:
     Save all those images into a gif at a predetermined framerate
     Export automatically
 
+    making a change to my readme as a test
+
+
 
 
     

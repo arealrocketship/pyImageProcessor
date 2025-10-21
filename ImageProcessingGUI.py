@@ -12,6 +12,8 @@ import imageio #image reading and writing
 
 photoPath = "testimage.png"
 
+#making another change to see what happens
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
