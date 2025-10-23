@@ -11,7 +11,7 @@ Current order of operations:
 
     making a change to my readme as a test
 
-
+checking again to see how this works and make sure I remember how to push a change!
 
 
     

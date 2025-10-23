@@ -40,7 +40,7 @@ class MainWindow(QWidget):
         self.effect_dropdown.addItems(effectsForDropdown)
         self.effect_dropdown.currentTextChanged.connect(self.apply_effect)
 
-        self.restore_button = QPushButton("Restore original image")
+        self.restore_button = QPushButton("Restore original image")#Not needed!
         self.restore_button.clicked.connect(self.load_image)
 
         button_layoutRow1 = QHBoxLayout()
@@ -50,7 +50,6 @@ class MainWindow(QWidget):
         button_layoutRow2 = QHBoxLayout()
         button_layoutRow2.addWidget(self.effect_dropdown)
         button_layoutRow2.addWidget(self.process_button)
-
 
         layout = QVBoxLayout()
         layout.addWidget(self.image_label)
@@ -68,9 +67,8 @@ class MainWindow(QWidget):
 
     def process_image(self):       
         try:
-            self.current_image = self.original_image.copy()
             effect = self.effect_dropdown.currentText()
-            self.apply_effect(effect)
+            self.current_image = self.apply_effect(effect)
             self.debugger(f"Processed Image with {effect}!")
             self.display_image(self.current_image)
         except AttributeError:
@@ -84,12 +82,16 @@ class MainWindow(QWidget):
             img = self.blur_image(img)
         elif effect =="Edge Detection":
             img = self.detect_edges(img)
-        self.current_image = img
+        return img
 
     def detect_edges(self,img):
+        #print(type(img))
         self.edge_threshold1 = self.edge_threshold1 + 5
         #self.edge_threshold2 = self.edge_threshold1*2 #Using fixed ratio
-        grayImage = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        if len(img.shape) == 3 and img.shape[2] == 3:
+            grayImage = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            grayImage = img  # already grayscale
         processedImage =  cv2.Canny(grayImage,self.edge_threshold1,self.edge_threshold1*2)
         return processedImage
 
@@ -106,8 +108,6 @@ class MainWindow(QWidget):
         M = cv2.getRotationMatrix2D(((cols-1)/2.0,(rows-1)/2.0),self.rotation_angle,1)
         processedImage = cv2.warpAffine(img,M,(cols,rows))
         return processedImage
-
- #Still can't stack effects additively. Unfortunate!
 
     def debugger(self,message):
         print(f"{message}")
